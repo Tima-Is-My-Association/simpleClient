@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>MainForm.ui.qml</file>
+        <file>NextWord.qml</file>
+        <file>IsWord.qml</file>
+        <file>AuthRequest.qml</file>
+        <file>Auth.qml</file>
+        <file>AuthInformations.qml</file>
+        <file>Logout.qml</file>
+        <file>PrivateRequest.qml</file>
+    </qresource>
+</RCC>
