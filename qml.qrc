@@ -8,6 +8,5 @@
         <file>Auth.qml</file>
         <file>AuthInformations.qml</file>
         <file>Logout.qml</file>
-        <file>PrivateRequest.qml</file>
     </qresource>
 </RCC>

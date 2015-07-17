@@ -9,30 +9,19 @@ Item {
         id: helper
     }
 
+    WebRequest {
+        id: request
+        onAccepted: logout(message)
+        onError: logoutError(errorNumber, errorMessage)
+    }
+
     function doLogout(baseUrl, u, token, n)
     {
-        var http = new XMLHttpRequest();
         var url = baseUrl + "/api/applications/auth/revoke/";
         var params = "u="+u+
                 '&token='+helper.hash(token + n)
 
-        http.open("POST", url, true);
-        http.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-        http.setRequestHeader("Content-Length", params.length);
-
-        http.onreadystatechange = function() {
-            if (http.readyState == XMLHttpRequest.DONE) {
-                if (http.status == 200) {
-                    logout(http.responseText)
-
-                } else {
-                    messageDialog.show(" Error Nr.: " + http.status + " Error: " + http.responseText)
-                    logoutError(" Error: " + http.responseText)
-
-                }
-            }
-        }
-        http.send(params);
+        request.sendRequest(url, params)
     }
 }
 
