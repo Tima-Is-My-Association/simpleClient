@@ -27,7 +27,13 @@ ApplicationWindow {
     MainForm {
         id: mainForm
         anchors.fill: parent
-        wordColor: loggedIn.active? "lightgreen" : (error_private.active? "red" : "white")
+        wordColor: loggedIn.active? "lightgreen" : (error_private.active? "red" : (error.active? "red" : "white"))
+        bLogin.text: loggedIn.active? "Logout" : (idle_private.active? "Login": "Loading...")
+        bLogin.enabled: loggedIn.active? true : (idle_private.active? true: false)
+        bAsso.visible: loggedIn.active? true : false
+        userName.visible: loggedIn.active? false : true
+        userPassword.visible: loggedIn.active? false : true
+        input.onAccepted: bAsso.clicked
 
         StateMachine {
             id: sm_public_api
@@ -37,18 +43,21 @@ ApplicationWindow {
             State {
                 id: idle
 
-                onEntered: {
-                    mainForm.button.enabled = true
-                }
-
                 SignalTransition {
                     targetState: nextWord_api
                     signal: mainForm.button.clicked
                 }
 
-                onExited: {
-                    mainForm.button.enabled = false
+                SignalTransition {
+                    targetState: nextWord_api
+                    signal: saveAssociation_form.saveAsso
                 }
+
+                SignalTransition {
+                    targetState: isWord_api
+                    signal: mainForm.bAsso.clicked
+                }
+
             }
 
             State {
@@ -65,6 +74,22 @@ ApplicationWindow {
                     targetState: error
                     signal: nextWord_form.nextWordError
                 }
+                onExited: mainForm.input.text = ''
+            }
+
+            State {
+                id: isWord_api
+                onEntered: {
+                    isWord_form.isWordTest(infos.baseUrl, mainForm.input.text, infos.language)
+                }
+                SignalTransition {
+                    targetState: idle
+                    signal: isWord_form.isWord
+                }
+                SignalTransition {
+                    targetState: error
+                    signal: isWord_form.isWordError
+                }
             }
 
             State {
@@ -73,6 +98,10 @@ ApplicationWindow {
                 TimeoutTransition {
                     targetState: idle
                     timeout: 1000
+                }
+
+                onEntered: {
+                    messageDialog.show("Error happened public")
                 }
             }
         }
@@ -87,21 +116,10 @@ ApplicationWindow {
 
             State {
                 id: idle_private
-                onEntered: {
-                    mainForm.bLogin.enabled = true
-                    mainForm.bLogin.text = 'Login'
-                    mainForm.userName.visible = true
-                    mainForm.userPassword.visible = true
-                }
 
                 SignalTransition {
                     targetState: authRequest_api
                     signal: mainForm.bLogin.clicked
-                }
-                onExited: {
-                    mainForm.bLogin.enabled = false
-                    mainForm.userName.visible = false
-                    mainForm.userPassword.visible = false
                 }
             }
 
@@ -111,11 +129,16 @@ ApplicationWindow {
                     targetState: idle_private
                     timeout: 1000
                 }
+                onEntered: {
+                    messageDialog.show("Error happened private")
+                }
             }
 
             State {
                 id: authRequest_api
-                onEntered: authRequest_form.doAuthRequest(infos.baseUrl, mainForm.userName.text, infos.client_id)
+                onEntered: {
+                    authRequest_form.doAuthRequest(infos.baseUrl, mainForm.userName.text, infos.client_id)
+                }
                 SignalTransition {
                     targetState: auth_api
                     signal: authRequest_form.authRequest
@@ -142,23 +165,34 @@ ApplicationWindow {
             State {
                 id: loggedIn
                 initialState: loggedIn_idle
-                onEntered: {
-                    mainForm.bLogin.enabled = true
-                    mainForm.bLogin.text = 'Logout'
-                    infos.n = infos.n + 1
-                }
+
                 SignalTransition {
-                    targetState: logout
+                    targetState: logout_api
                     signal: mainForm.bLogin.clicked
                 }
                 State {
                     id: loggedIn_idle
+                    SignalTransition {
+                        targetState: loggedIn_saveAsso
+                        signal: isWord_form.isWord
+                    }
+                    onEntered: {
+                        infos.n = (infos.n + 1) % 2147483647 // Workaround to uint32_t
+                    }
                 }
 
+                State {
+                    id: loggedIn_saveAsso
+                    onEntered: saveAssociation_form.doSaveAssociation(infos.baseUrl, infos.u, infos.token, infos.n, infos.language, mainForm.word.text, mainForm.input.text)
+                    SignalTransition {
+                        targetState: loggedIn_idle
+                        signal: saveAssociation_form.saveAsso
+                    }
+                }
             }
 
             State {
-                id: logout
+                id: logout_api
                 onEntered: {
                     logout_form.doLogout(infos.baseUrl, infos.u, infos.token, infos.n)
                 }
@@ -166,7 +200,10 @@ ApplicationWindow {
                     targetState: idle_private
                     signal: logout_form.logout
                 }
-
+                SignalTransition {
+                    targetState: error_private
+                    signal: logout_form.logoutError
+                }
             }
         }
 
@@ -181,22 +218,21 @@ ApplicationWindow {
         AuthRequest {
             id: authRequest_form
             onAuthRequest: {
-                mainForm.userStatus.color = 'green'
                 infos.timestamp = JSON.parse(nW)['timestamp']
-            }
-            onAuthRequestError: {
-                mainForm.userStatus.color = 'red'
             }
         }
 
         Auth {
             id: auth_form
             onAuth: {
-                mainForm.userStatus.color = 'yellow'
                 infos.n = JSON.parse(nW)['n']
                 infos.u = JSON.parse(nW)['u']
                 infos.token = JSON.parse(nW)['token']
             }
+        }
+
+        SaveAssociation {
+            id: saveAssociation_form
         }
 
         Logout {
@@ -207,12 +243,12 @@ ApplicationWindow {
             id: isWord_form
         }
 
-
-
-
         Component.onCompleted: {
-            input.accepted.connect(button.clicked)
+            input.accepted.connect(bAsso.clicked)
             nextWord_form.getNextWord();
+
+            userName.accepted.connect(bLogin.clicked)
+            userPassword.accepted.connect(bLogin.clicked)
         }
     }
 

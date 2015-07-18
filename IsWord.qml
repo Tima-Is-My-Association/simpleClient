@@ -3,8 +3,8 @@ import TIMA.Helper 1.0
 
 Item {
 
-    signal isWord
-    signal isWordError (string error)
+    signal isWord (string nW)
+    signal isWordError (int errorNumber, string errorMessage)
 
     WebRequest {
         id: request
@@ -12,10 +12,10 @@ Item {
         onError: isWordError(errorNumber, errorMessage)
     }
 
-    function isWordTest(baseUrl, word)
+    function isWordTest(baseUrl, word, language)
     {
         var url = baseUrl + "/api/words/isa/";
-        var params = "word="+word+"&language=DE";
+        var params = "word="+word+"&language="+language;
 
         request.sendRequest(url, params)
     }

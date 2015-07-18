@@ -4,7 +4,7 @@ import TIMA.Helper 1.0
 Item {
 
     signal authRequest (string nW)
-    signal authRequestError (string error)
+    signal authRequestError (int errorNumber, string errorMessage)
 
     WebRequest {
         id: request

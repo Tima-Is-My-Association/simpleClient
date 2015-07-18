@@ -10,9 +10,9 @@ Item {
     property alias word: label1
     property alias button: button
     property alias bLogin: bLogin
+    property alias bAsso: saveAssociation
     property alias userName: textField3
     property alias userPassword: textField2
-    property alias userStatus: userStatus
     property alias input: textField1
     property string wordColor: "lightgreen"
 
@@ -48,51 +48,49 @@ Item {
             width: parent.width
             Layout.fillWidth: true
 
-            TextField {
-                id: textField1
-                style: TextFieldStyle {
-                    textColor: "black"
-                    background: Rectangle {
-                        radius: 2
-                        color: wordColor
-                        implicitWidth: 100
-                        implicitHeight: 24
-                        border.color: "#333"
-                        border.width: 1
-                    }
-                }
-
-                onAccepted: saveAssociation.clicked
-                focus: true
-                KeyNavigation.tab: textField3
-
-                anchors.right: saveAssociation.left
-                anchors.rightMargin: 10
+            RowLayout {
+                id: rowLayout1
                 anchors.left: parent.left
                 anchors.leftMargin: 30
-            }
-
-            Button {
-                id: saveAssociation
-                height: textField1.height
-                text: qsTr("Save Association")
-                anchors.right: button.left
-                anchors.rightMargin: 10
-            }
-
-            Button {
-                id: button
-                height: textField1.height
-                text: qsTr("Next Word")
                 anchors.right: parent.right
                 anchors.rightMargin: 30
+                spacing: 10
+
+                TextField {
+                    id: textField1
+                    Layout.fillWidth: true
+                    style: TextFieldStyle {
+                        textColor: "black"
+                        background: Rectangle {
+                            radius: 2
+                            color: wordColor
+                            implicitWidth: 100
+                            implicitHeight: 24
+                            border.color: "#333"
+                            border.width: 1
+                        }
+                    }
+                    KeyNavigation.tab: textField3
+                }
+
+                Button {
+                    id: saveAssociation
+                    height: textField1.height
+                    text: qsTr("Save Association")
+                }
+
+                Button {
+                    id: button
+                    height: textField1.height
+                    text: qsTr("Next Word")
+                }
             }
         }
     }
 
     Button {
         id: bLogin
-        KeyNavigation.tab: textField1
+        KeyNavigation.tab: textField1.enabled? textField1 : textField3
         anchors.right: parent.right
         anchors.top: parent.top
         text: qsTr("Login")
@@ -111,19 +109,11 @@ Item {
     TextField {
         id: textField3
         text: ""
+        focus: true
         KeyNavigation.tab: textField2
         onAccepted: bLogin.clicked
         anchors.right: textField2.left
         placeholderText: qsTr("Username")
-    }
-
-    Rectangle {
-        id: userStatus
-        anchors.top: parent.top
-        anchors.left: parent.left
-        width: 50
-        height: 50
-        color: "blue"
     }
 }
 

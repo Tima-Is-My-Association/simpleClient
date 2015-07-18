@@ -3,7 +3,7 @@ import TIMA.Helper 1.0
 
 Item {
     signal logout (string nW)
-    signal logoutError (string error)
+    signal logoutError (int errorNumber, string errorMessage)
 
     HashHelper {
         id: helper
