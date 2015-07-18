@@ -242,14 +242,6 @@ ApplicationWindow {
         IsWord {
             id: isWord_form
         }
-
-        Component.onCompleted: {
-            input.accepted.connect(bAsso.clicked)
-            nextWord_form.getNextWord();
-
-            userName.accepted.connect(bLogin.clicked)
-            userPassword.accepted.connect(bLogin.clicked)
-        }
     }
 
     MessageDialog {

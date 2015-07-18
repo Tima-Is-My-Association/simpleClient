@@ -90,7 +90,6 @@ Item {
 
     Button {
         id: bLogin
-        KeyNavigation.tab: textField1.enabled? textField1 : textField3
         anchors.right: parent.right
         anchors.top: parent.top
         text: qsTr("Login")
@@ -99,8 +98,7 @@ Item {
     TextField {
         id: textField2
         text: ""
-        KeyNavigation.tab: bLogin
-        onAccepted: bLogin.clicked
+        KeyNavigation.tab: textField1
         echoMode: 2
         anchors.right: bLogin.left
         placeholderText: qsTr("Password")
@@ -111,9 +109,14 @@ Item {
         text: ""
         focus: true
         KeyNavigation.tab: textField2
-        onAccepted: bLogin.clicked
         anchors.right: textField2.left
         placeholderText: qsTr("Username")
+    }
+
+    Component.onCompleted: {
+        textField1.accepted.connect(bAsso.clicked)
+        textField3.accepted.connect(bLogin.clicked)
+        textField2.accepted.connect(bLogin.clicked)
     }
 }
 
