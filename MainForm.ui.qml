@@ -8,18 +8,30 @@ Item {
     anchors.fill: parent
 
     property alias word: label1
-    property alias button: button
+    property alias bNextWord: nextWord
     property alias bLogin: bLogin
     property alias bAsso: saveAssociation
-    property alias userName: textField3
-    property alias userPassword: textField2
-    property alias input: textField1
+    property alias userName: textUsername
+    property alias userPassword: textPassword
+    property alias input: textWord
     property string wordColor: "lightgreen"
+    property bool loggedOut: true
+
+    Image {
+        source: "qrc:images/tima.svg"
+        anchors.left: parent.left
+        anchors.leftMargin: 30
+        anchors.right: parent.right
+        anchors.rightMargin: 30
+        anchors.verticalCenter: parent.verticalCenter
+        visible: loggedOut
+    }
 
     ColumnLayout {
         id: columnLayout1
         width: parent.width
         height: parent.height
+        visible: !loggedOut
 
         Item {
             id: item2
@@ -57,7 +69,7 @@ Item {
                 spacing: 10
 
                 TextField {
-                    id: textField1
+                    id: textWord
                     Layout.fillWidth: true
                     style: TextFieldStyle {
                         textColor: "black"
@@ -70,18 +82,18 @@ Item {
                             border.width: 1
                         }
                     }
-                    KeyNavigation.tab: textField3
+                    KeyNavigation.tab: textUsername
                 }
 
                 Button {
                     id: saveAssociation
-                    height: textField1.height
+                    height: textWord.height
                     text: qsTr("Save Association")
                 }
 
                 Button {
-                    id: button
-                    height: textField1.height
+                    id: nextWord
+                    height: textWord.height
                     text: qsTr("Next Word")
                 }
             }
@@ -96,27 +108,21 @@ Item {
     }
 
     TextField {
-        id: textField2
+        id: textPassword
         text: ""
-        KeyNavigation.tab: textField1
+        KeyNavigation.tab: textWord
         echoMode: 2
         anchors.right: bLogin.left
         placeholderText: qsTr("Password")
     }
 
     TextField {
-        id: textField3
+        id: textUsername
         text: ""
         focus: true
-        KeyNavigation.tab: textField2
-        anchors.right: textField2.left
+        KeyNavigation.tab: textPassword
+        anchors.right: textPassword.left
         placeholderText: qsTr("Username")
-    }
-
-    Component.onCompleted: {
-        textField1.accepted.connect(bAsso.clicked)
-        textField3.accepted.connect(bLogin.clicked)
-        textField2.accepted.connect(bLogin.clicked)
     }
 }
 

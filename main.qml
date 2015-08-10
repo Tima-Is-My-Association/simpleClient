@@ -27,76 +27,71 @@ ApplicationWindow {
     MainForm {
         id: mainForm
         anchors.fill: parent
-        wordColor: loggedIn.active? "lightgreen" : (error_private.active? "red" : (error.active? "red" : "white"))
-        bLogin.text: loggedIn.active? "Logout" : (idle_private.active? "Login": "Loading...")
-        bLogin.enabled: loggedIn.active? true : (idle_private.active? true: false)
+        wordColor: loggedIn.active? "lightgreen" : (error_private.active? "red" : (error_public.active? "red" : "white"))
+        bLogin.text: loggedIn.active? "Logout" : "Login"
+        bLogin.enabled: loggedIn.active? true : (loggedOut.active? true: false)
         bAsso.visible: loggedIn.active? true : false
         userName.visible: loggedIn.active? false : true
         userPassword.visible: loggedIn.active? false : true
         input.onAccepted: bAsso.clicked
+        loggedOut: !loggedIn.active
+
+        Component.onCompleted: {
+            input.accepted.connect(bAsso.clicked)
+            userPassword.accepted.connect(bLogin.clicked)
+            userName.accepted.connect(bLogin.clicked)
+        }
 
         StateMachine {
-            id: sm_public_api
+            id: sm_api
             running: true
-            initialState: idle
+            initialState: loggedOut
 
             State {
-                id: idle
+                id: loggedOut
+                initialState: nextWord_api
 
                 SignalTransition {
-                    targetState: nextWord_api
-                    signal: mainForm.button.clicked
-                }
-
-                SignalTransition {
-                    targetState: nextWord_api
-                    signal: saveAssociation_form.saveAsso
-                }
-
-                SignalTransition {
-                    targetState: isWord_api
-                    signal: mainForm.bAsso.clicked
-                }
-
-            }
-
-            State {
-                id: nextWord_api
-                onEntered: {
-                    mainForm.word.text = '' // TODO anderer weg für ladebalken // StateMachine und State wechsel?
-                    nextWord_form.getNextWord()
-                }
-                SignalTransition {
-                    targetState: idle
-                    signal: nextWord_form.nextWord
-                }
-                SignalTransition {
-                    targetState: error
+                    targetState: error_public
                     signal: nextWord_form.nextWordError
                 }
-                onExited: mainForm.input.text = ''
+
+                State {
+                    id: idle
+
+                    SignalTransition {
+                        targetState: nextWord_api
+                        signal: mainForm.bNextWord.clicked
+                    }
+
+                    SignalTransition {
+                        targetState: authRequest_api
+                        signal: mainForm.bLogin.clicked
+                    }
+                }
+
+                State {
+                    id: nextWord_api
+                    onEntered: {
+                        mainForm.word.text = '' // TODO anderer weg für ladebalken // StateMachine und State wechsel?
+                        nextWord_form.getNextWord()
+                    }
+
+                    SignalTransition {
+                        targetState: idle
+                        signal: nextWord_form.nextWord
+                    }
+
+                    onExited: mainForm.input.text = ''
+                }
             }
 
-            State {
-                id: isWord_api
-                onEntered: {
-                    isWord_form.isWordTest(infos.baseUrl, mainForm.input.text, infos.language)
-                }
-                SignalTransition {
-                    targetState: idle
-                    signal: isWord_form.isWord
-                }
-                SignalTransition {
-                    targetState: error
-                    signal: isWord_form.isWordError
-                }
-            }
 
             State {
-                id: error
+                id: error_public
 
                 TimeoutTransition {
-                    targetState: idle
+                    targetState: loggedOut
                     timeout: 1000
                 }
 
@@ -104,33 +99,17 @@ ApplicationWindow {
                     messageDialog.show("Error happened public")
                 }
             }
-        }
-
-        StateMachine {
-            id: sm_private_api
-            running: true
-            initialState: idle_private
-            AuthInformations {
-                id: infos
-            }
-
-            State {
-                id: idle_private
-
-                SignalTransition {
-                    targetState: authRequest_api
-                    signal: mainForm.bLogin.clicked
-                }
-            }
 
             State {
                 id: error_private
+
                 TimeoutTransition {
-                    targetState: idle_private
+                    targetState: loggedOut
                     timeout: 1000
                 }
+
                 onEntered: {
-                    messageDialog.show("Error happened private")
+                    messageDialog.show("Error happened public")
                 }
             }
 
@@ -139,10 +118,12 @@ ApplicationWindow {
                 onEntered: {
                     authRequest_form.doAuthRequest(infos.baseUrl, mainForm.userName.text, infos.client_id)
                 }
+
                 SignalTransition {
                     targetState: auth_api
                     signal: authRequest_form.authRequest
                 }
+
                 SignalTransition {
                     targetState: error_private
                     signal: authRequest_form.authRequestError
@@ -152,10 +133,12 @@ ApplicationWindow {
             State {
                 id: auth_api
                 onEntered: auth_form.doAuth(infos.baseUrl, mainForm.userName.text, mainForm.userPassword.text, infos.client_id, infos.client_secret, infos.timestamp)
+
                 SignalTransition {
                     targetState: loggedIn
                     signal: auth_form.auth
                 }
+
                 SignalTransition {
                     targetState: error_private
                     signal: auth_form.authError
@@ -164,20 +147,45 @@ ApplicationWindow {
 
             State {
                 id: loggedIn
-                initialState: loggedIn_idle
+                initialState: success
+
+                AuthInformations {
+                    id: infos
+                }
 
                 SignalTransition {
                     targetState: logout_api
                     signal: mainForm.bLogin.clicked
                 }
+
+                SignalTransition {
+                    targetState: error_private
+                    signal: isWord_form.isWordError
+                }
+
                 State {
                     id: loggedIn_idle
+
                     SignalTransition {
                         targetState: loggedIn_saveAsso
                         signal: isWord_form.isWord
                     }
+
+                    SignalTransition {
+                        signal: mainForm.bAsso.clicked
+                        onTriggered: isWord_form.isWordTest(infos.baseUrl, mainForm.input.text, infos.language)
+                    }
+                }
+
+                State {
+                    id: success
                     onEntered: {
                         infos.n = (infos.n + 1) % 2147483647 // Workaround to uint32_t
+                    }
+
+                    TimeoutTransition {
+                        targetState: nextWord_login
+                        timeout: 10
                     }
                 }
 
@@ -185,9 +193,30 @@ ApplicationWindow {
                     id: loggedIn_saveAsso
                     onEntered: saveAssociation_form.doSaveAssociation(infos.baseUrl, infos.u, infos.token, infos.n, infos.language, mainForm.word.text, mainForm.input.text)
                     SignalTransition {
-                        targetState: loggedIn_idle
+                        targetState: success
                         signal: saveAssociation_form.saveAsso
                     }
+
+                    SignalTransition {
+                        targetState: error_private
+                        signal: saveAssociation_form.saveAssoError
+                    }
+                }
+
+                State {
+                    id: nextWord_login
+                    onEntered: {
+                        mainForm.word.text = '' // TODO anderer weg für ladebalken // StateMachine und State wechsel?
+                        nextWord_form.getNextWord()
+                    }
+
+                    SignalTransition {
+                        targetState: loggedIn_idle
+                        signal: nextWord_form.nextWord
+                        //TODO exclude word
+                    }
+
+                    onExited: mainForm.input.text = ''
                 }
             }
 
@@ -197,7 +226,7 @@ ApplicationWindow {
                     logout_form.doLogout(infos.baseUrl, infos.u, infos.token, infos.n)
                 }
                 SignalTransition {
-                    targetState: idle_private
+                    targetState: loggedOut
                     signal: logout_form.logout
                 }
                 SignalTransition {

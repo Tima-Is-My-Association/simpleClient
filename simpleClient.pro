@@ -17,3 +17,5 @@ include(deployment.pri)
 HEADERS += \
     HashHelper.h \
     WebRequest.h
+
+DISTFILES +=

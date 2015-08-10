@@ -9,5 +9,7 @@
         <file>AuthInformations.qml</file>
         <file>Logout.qml</file>
         <file>SaveAssociation.qml</file>
+        <file>ExcludeWordAdd.qml</file>
+        <file>images/tima.svg</file>
     </qresource>
 </RCC>
