@@ -8,6 +8,7 @@ Item {
     anchors.fill: parent
 
     property alias word: label1
+    property alias statusMessage: statusMessage
     property alias bNextWord: nextWord
     property alias bLogin: bLogin
     property alias bAsso: saveAssociation
@@ -54,6 +55,22 @@ Item {
                 visible: text ? true : false
                 font.pointSize: 14
             }
+
+            Text {
+                id: statusMessage
+                text: qsTr("")
+                color: "red"
+                anchors.bottom: label1.top
+                //anchors.horizontalCenter: parent.horizontalCenter
+                anchors.left: parent.left
+                anchors.right: parent.right
+                visible: text ? true : false
+                font.pointSize: 16
+                wrapMode: Text.Wrap
+                elide: Text.ElideMiddle
+                horizontalAlignment: Text.AlignHCenter
+            }
+
         }
 
         Item {

@@ -4,12 +4,16 @@ import TIMA.Helper 1.0
 Item {
 
     signal isWord (string nW)
-    signal isWordError (int errorNumber, string errorMessage)
+    signal isWordNonPositive (int errorNumber, string errorMessage)
+    signal isWordUnknown ()
+    signal isWordError ()
+
+    property string lastWord: ''
 
     WebRequest {
         id: request
         onAccepted: isWord(message)
-        onError: isWordError(errorNumber, errorMessage)
+        onError: isWordNonPositive(errorNumber, errorMessage)
     }
 
     function isWordTest(baseUrl, word, language)

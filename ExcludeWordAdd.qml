@@ -12,7 +12,11 @@ Item {
         onError: excludeAddError(errorNumber, errorMessage)
     }
 
-    function doExcludeAdd(baseUrl, u, token, word, language)
+    HashHelper {
+        id: helper
+    }
+
+    function doExcludeAdd(baseUrl, u, token, n, word, language)
     {
         var url = baseUrl + "/api/profile/excludedwords/add/";
         var params = "language="+language+

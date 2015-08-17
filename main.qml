@@ -49,20 +49,10 @@ ApplicationWindow {
 
             State {
                 id: loggedOut
-                initialState: nextWord_api
-
-                SignalTransition {
-                    targetState: error_public
-                    signal: nextWord_form.nextWordError
-                }
+                initialState: idle
 
                 State {
                     id: idle
-
-                    SignalTransition {
-                        targetState: nextWord_api
-                        signal: mainForm.bNextWord.clicked
-                    }
 
                     SignalTransition {
                         targetState: authRequest_api
@@ -71,45 +61,16 @@ ApplicationWindow {
                 }
 
                 State {
-                    id: nextWord_api
+                    id: error_public
+
+                    TimeoutTransition {
+                        targetState: loggedOut
+                        timeout: 1000
+                    }
+
                     onEntered: {
-                        mainForm.word.text = '' // TODO anderer weg für ladebalken // StateMachine und State wechsel?
-                        nextWord_form.getNextWord()
+                        messageDialog.show("Error happened public")
                     }
-
-                    SignalTransition {
-                        targetState: idle
-                        signal: nextWord_form.nextWord
-                    }
-
-                    onExited: mainForm.input.text = ''
-                }
-            }
-
-
-            State {
-                id: error_public
-
-                TimeoutTransition {
-                    targetState: loggedOut
-                    timeout: 1000
-                }
-
-                onEntered: {
-                    messageDialog.show("Error happened public")
-                }
-            }
-
-            State {
-                id: error_private
-
-                TimeoutTransition {
-                    targetState: loggedOut
-                    timeout: 1000
-                }
-
-                onEntered: {
-                    messageDialog.show("Error happened public")
                 }
             }
 
@@ -125,7 +86,7 @@ ApplicationWindow {
                 }
 
                 SignalTransition {
-                    targetState: error_private
+                    targetState: error_public
                     signal: authRequest_form.authRequestError
                 }
             }
@@ -140,7 +101,7 @@ ApplicationWindow {
                 }
 
                 SignalTransition {
-                    targetState: error_private
+                    targetState: error_public
                     signal: auth_form.authError
                 }
             }
@@ -164,6 +125,19 @@ ApplicationWindow {
                 }
 
                 State {
+                    id: error_private
+
+                    TimeoutTransition {
+                        targetState: loggedIn
+                        timeout: 1000
+                    }
+
+                    onEntered: {
+                        messageDialog.show("Error happened public")
+                    }
+                }
+
+                State {
                     id: loggedIn_idle
 
                     SignalTransition {
@@ -172,20 +146,46 @@ ApplicationWindow {
                     }
 
                     SignalTransition {
+                        targetState: unknownWord
+                        signal: isWord_form.isWordUnknown
+                    }
+
+                    SignalTransition {
                         signal: mainForm.bAsso.clicked
                         onTriggered: isWord_form.isWordTest(infos.baseUrl, mainForm.input.text, infos.language)
                     }
+
+                    SignalTransition {
+                        targetState: exclude_word
+                        signal: mainForm.bNextWord.clicked
+                    }
+
+                    onEntered: mainForm.input.focus = true
+
+                    onExited: mainForm.statusMessage.text = ''
                 }
 
                 State {
                     id: success
                     onEntered: {
                         infos.n = (infos.n + 1) % 2147483647 // Workaround to uint32_t
+                        isWord_form.lastWord = ''
                     }
 
                     TimeoutTransition {
-                        targetState: nextWord_login
+                        targetState: nextWord
                         timeout: 10
+                    }
+                }
+
+                State {
+                    id: unknownWord
+
+                    onEntered: mainForm.statusMessage.text = "We have not recognized your input as word. Are you sure you have no spelling mistakes, in order to confirm your input press 'Save Association'"
+
+                    TimeoutTransition {
+                        targetState: loggedIn_idle
+                        timeout: 500
                     }
                 }
 
@@ -204,7 +204,7 @@ ApplicationWindow {
                 }
 
                 State {
-                    id: nextWord_login
+                    id: nextWord
                     onEntered: {
                         mainForm.word.text = '' // TODO anderer weg für ladebalken // StateMachine und State wechsel?
                         nextWord_form.getNextWord()
@@ -217,6 +217,22 @@ ApplicationWindow {
                     }
 
                     onExited: mainForm.input.text = ''
+                }
+
+                State {
+                    id: exclude_word
+
+                    onEntered: excludeWordAdd_form.doExcludeAdd(infos.baseUrl, infos.u, infos.token, infos.n, mainForm.word.text, infos.language)
+
+                    SignalTransition {
+                        targetState: success
+                        signal: excludeWordAdd_form.excludeAdd
+                    }
+
+                    SignalTransition {
+                        targetState: error_private
+                        signal: excludeWordAdd_form.excludeAddError
+                    }
                 }
             }
 
@@ -270,6 +286,24 @@ ApplicationWindow {
 
         IsWord {
             id: isWord_form
+
+            onIsWordNonPositive: {
+                if (isWord_form.lastWord == mainForm.input.text) {
+                    isWord_form.isWord(isWord_form.lastWord)
+                }
+
+                if (errorNumber == 203) {
+                    isWord_form.lastWord = mainForm.input.text
+                    isWord_form.isWordUnknown()
+                }
+                else {
+                    isWord_form.isWordError()
+                }
+            }
+        }
+
+        ExcludeWordAdd {
+            id: excludeWordAdd_form
         }
     }
 
