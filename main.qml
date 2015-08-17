@@ -207,7 +207,7 @@ ApplicationWindow {
                     id: nextWord
                     onEntered: {
                         mainForm.word.text = '' // TODO anderer weg für ladebalken // StateMachine und State wechsel?
-                        nextWord_form.getNextWord()
+                        nextWord_form.getNextWord(infos.username)
                     }
 
                     SignalTransition {
@@ -273,6 +273,7 @@ ApplicationWindow {
                 infos.n = JSON.parse(nW)['n']
                 infos.u = JSON.parse(nW)['u']
                 infos.token = JSON.parse(nW)['token']
+                infos.username = mainForm.userName.text
             }
         }
 
@@ -295,6 +296,7 @@ ApplicationWindow {
                 if (errorNumber == 203) {
                     isWord_form.lastWord = mainForm.input.text
                     isWord_form.isWordUnknown()
+                    messageDialog.show(errorNumber + ' ' + errorMessage)
                 }
                 else {
                     isWord_form.isWordError()

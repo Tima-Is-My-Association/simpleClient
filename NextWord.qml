@@ -22,10 +22,10 @@ Item {
         return nW
     }
 
-    function getNextWord()
+    function getNextWord(user)
     {
         var url = "https://tima.jnphilipp.org/api/words/next/";
-        var params = "language=DE" + lastWords.reduce(function (ret, w) {
+        var params = "language=DE" + "&username=" + user + lastWords.reduce(function (ret, w) {
             return ret + "&excludes=" + w;
         }, '');
 

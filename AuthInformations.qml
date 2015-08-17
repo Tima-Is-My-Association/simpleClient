@@ -9,5 +9,6 @@ Item {
     property int n
     property string u
     property string token
+    property string username
 }
 
