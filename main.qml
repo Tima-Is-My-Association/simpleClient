@@ -14,10 +14,6 @@ ApplicationWindow {
         Menu {
             title: qsTr("&File")
             MenuItem {
-                text: qsTr("&Open")
-                onTriggered: messageDialog.show(qsTr("Open action triggered"));
-            }
-            MenuItem {
                 text: qsTr("E&xit")
                 onTriggered: Qt.quit();
             }
@@ -64,7 +60,7 @@ ApplicationWindow {
                     id: error_public
 
                     TimeoutTransition {
-                        targetState: loggedOut
+                        targetState: idle
                         timeout: 1000
                     }
 
@@ -128,7 +124,7 @@ ApplicationWindow {
                     id: error_private
 
                     TimeoutTransition {
-                        targetState: loggedIn
+                        targetState: loggedIn_idle
                         timeout: 1000
                     }
 
@@ -216,6 +212,11 @@ ApplicationWindow {
                         //TODO exclude word
                     }
 
+                    SignalTransition {
+                        targetState: error_private
+                        signal: nextWord_form.nextWordError
+                    }
+
                     onExited: mainForm.input.text = ''
                 }
 
@@ -246,7 +247,7 @@ ApplicationWindow {
                     signal: logout_form.logout
                 }
                 SignalTransition {
-                    targetState: error_private
+                    targetState: error_public
                     signal: logout_form.logoutError
                 }
             }
@@ -296,7 +297,6 @@ ApplicationWindow {
                 if (errorNumber == 203) {
                     isWord_form.lastWord = mainForm.input.text
                     isWord_form.isWordUnknown()
-                    messageDialog.show(errorNumber + ' ' + errorMessage)
                 }
                 else {
                     isWord_form.isWordError()
